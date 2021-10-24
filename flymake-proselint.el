@@ -3,7 +3,7 @@
 ;; Copyright (C) 2021  Free Software Foundation, Inc.
 ;;
 ;; Author: Manuel Uberti <manuel.uberti@inventati.org>
-;; Version: 0.2.1
+;; Version: 0.2.2
 ;; Keywords: convenience
 ;; Package-Requires: ((emacs "26.1"))
 ;; URL: https://github.com/manuel-uberti/flymake-proselint
@@ -51,30 +51,31 @@
         :command '("proselint" "-")
         :sentinel
         (lambda (proc _event)
-          (when (eq 'exit (process-status proc))
-            (unwind-protect
-                (if (with-current-buffer source (eq proc flymake-proselint--flymake-proc))
-                    (with-current-buffer (process-buffer proc)
-                      (goto-char (point-min))
-                      (cl-loop
-                       while (search-forward-regexp
-                              "^.+:\\([[:digit:]]+\\):\\([[:digit:]]+\\): \\(.+\\)$"
-                              nil t)
-                       for msg = (match-string 3)
-                       for (beg . end) = (flymake-diag-region
-                                          source
-                                          (string-to-number (match-string 1))
-                                          (string-to-number (match-string 2)))
-                       collect (flymake-make-diagnostic source
-                                                        beg
-                                                        end
-                                                        :warning
-                                                        msg)
-                       into diags
-                       finally (funcall report-fn diags)))
-                  (flymake-log :warning "Canceling obsolete check %s"
-                               proc))
-              (kill-buffer (process-buffer proc)))))))
+          (let ((status (process-status proc)))
+            (when (or (eq status 'exit) (eq status 'signal))
+              (unwind-protect
+                  (if (with-current-buffer source (eq proc flymake-proselint--flymake-proc))
+                      (with-current-buffer (process-buffer proc)
+                        (goto-char (point-min))
+                        (cl-loop
+                         while (search-forward-regexp
+                                "^.+:\\([[:digit:]]+\\):\\([[:digit:]]+\\): \\(.+\\)$"
+                                nil t)
+                         for msg = (match-string 3)
+                         for (beg . end) = (flymake-diag-region
+                                            source
+                                            (string-to-number (match-string 1))
+                                            (string-to-number (match-string 2)))
+                         collect (flymake-make-diagnostic source
+                                                          beg
+                                                          end
+                                                          :warning
+                                                          msg)
+                         into diags
+                         finally (funcall report-fn diags)))
+                    (flymake-log :warning "Canceling obsolete check %s"
+                                 proc))
+                (kill-buffer (process-buffer proc))))))))
       (process-send-region flymake-proselint--flymake-proc (point-min) (point-max))
       (process-send-eof flymake-proselint--flymake-proc))))
 
