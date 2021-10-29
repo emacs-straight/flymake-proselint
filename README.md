@@ -12,7 +12,7 @@ checked with something like:
 
 ``` emacs-lisp
 (add-hook 'text-mode-hook (lambda ()
-                            (flymake-mode +1)
+                            (flymake-mode)
                             (flymake-proselint-setup)))
 ```
 
