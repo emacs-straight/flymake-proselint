@@ -6,7 +6,7 @@
 ;; Version: 0.2.3
 ;; Keywords: convenience
 ;; Package-Requires: ((emacs "26.1"))
-;; URL: https://github.com/manuel-uberti/flymake-proselint
+;; URL: https://git.sr.ht/~manuel-uberti/flycheck-proselint
 
 ;; flymake-proselint is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
