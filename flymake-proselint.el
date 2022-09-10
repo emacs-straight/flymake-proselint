@@ -3,6 +3,7 @@
 ;; Copyright (C) 2021-2022  Free Software Foundation, Inc.
 ;;
 ;; Author: Manuel Uberti <manuel.uberti@inventati.org>
+;; Maintainer: Manuel Uberti <~manuel-uberti/flymake-proselint@lists.sr.ht>
 ;; Version: 0.2.3
 ;; Keywords: convenience
 ;; Package-Requires: ((emacs "26.1"))
