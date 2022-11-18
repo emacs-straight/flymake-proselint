@@ -147,21 +147,21 @@ The following %-sequences are replaced:
 
 (defconst flymake-proselint--custom-type
   `(set :greedy t
-	,@(mapcar
-	   (lambda (opt)
-	     ;; TODO: Add a :tag
-	     `(const ,opt))
-	   flymake-proselint--options))
+        ,@(mapcar
+           (lambda (opt)
+             ;; TODO: Add a :tag
+             `(const ,opt))
+           flymake-proselint--options))
   "Custom option type for proselint configurations.")
 
 (defun flymake-proselint-safe-option-p (val)
   "Check if VAL is a safe (and valid) local value."
   (and (listp val)
        (catch 'fail
-	 (dolist (elem val)
-	   (unless (memq elem flymake-proselint--options)
-	     (throw 'fail nil)))
-	 t)))
+         (dolist (elem val)
+           (unless (memq elem flymake-proselint--options)
+             (throw 'fail nil)))
+         t)))
 
 (defcustom flymake-proselint-max-errors 1000
   "After how many errors should Proselint give up?
@@ -257,9 +257,9 @@ Flymake diagnostic objects."
              (plist-get err :start)
              (plist-get err :end)
              (pcase (plist-get err :severity)
-               ("warning"	:warning)
-               ("suggestion"	:note)
-               (_		:error))
+               ("warning"       :warning)
+               ("suggestion"    :note)
+               (_               :error))
              (format-spec
               flymake-proselint-message-format
               `((?m . ,(plist-get err :message))
@@ -283,39 +283,38 @@ Flymake diagnostic objects."
 
 (defvar-local flymake-proselint--flymake-proc nil)
 
-(defun flymake-proselint-sentinel (proc _event)
-  "Sentinel on PROC for handling Proselint response.
-A successfully parsed message is passed onto the function
-`flymake-proselint-sentinel-1' for further handling."
-  (let ((source (process-get proc 'source)))
-    (when (buffer-live-p source)
-      (pcase (process-status proc)
-        ('exit
-         (let ((report-fn (process-get proc 'report-fn)))
-           (unwind-protect
-               (with-current-buffer (process-buffer proc)
-                 (goto-char (point-min))
-                 (cond
-                  ((with-current-buffer source
-                     (not (eq proc flymake-proselint--flymake-proc)))
-                   (flymake-log :warning "Canceling obsolete check %s" proc))
-                  ((= (point-max) (point-min))
-                   (flymake-log :debug "Empty response"))
-                  ((condition-case err
-                       (let ((response (json-parse-buffer :object-type 'plist
-                                                          :array-type 'list)))
-                         (if (string= (plist-get response :status) "success")
-                             (thread-last
-                               (plist-get response :data)
-                               (flymake-proselint-sentinel-1 source)
-                               (funcall report-fn))
-                           (flymake-log :error "Check failed")))
-                     (json-parse-error
-                      (flymake-log :error "Invalid response: %S" err))))))
-             (with-current-buffer source
-               (setq flymake-proselint--flymake-proc nil))
-             (kill-buffer (process-buffer proc)))))
-        ('signal (kill-buffer (process-buffer proc)))))))
+(defun flymake-proselint-make-sentinel (source report-fn)
+  "Create a sentinel on the buffer SOURCE that will call REPORT-FN."
+  (lambda (proc _even)
+    "Sentinel on PROC for handling Proselint response.
+ A successfully parsed message is passed onto the function
+ `flymake-proselint-sentinel-1' for further handling."
+    (pcase (process-status proc)
+      ('exit
+       (unwind-protect
+           (with-current-buffer (process-buffer proc)
+             (goto-char (point-min))
+             (cond
+              ((with-current-buffer source
+                 (not (eq proc flymake-proselint--flymake-proc)))
+               (flymake-log :warning "Canceling obsolete check %s" proc))
+              ((= (point-max) (point-min))
+               (flymake-log :debug "Empty response"))
+              ((condition-case err
+                   (let ((response (json-parse-buffer :object-type 'plist
+                                                      :array-type 'list)))
+                     (if (string= (plist-get response :status) "success")
+                         (thread-last
+                           (plist-get response :data)
+                           (flymake-proselint-sentinel-1 source)
+                           (funcall report-fn))
+                       (flymake-log :error "Check failed")))
+                 (json-parse-error
+                  (flymake-log :error "Invalid response: %S" err))))))
+         (with-current-buffer source
+           (setq flymake-proselint--flymake-proc nil))
+         (kill-buffer (process-buffer proc))))
+      ('signal (kill-buffer (process-buffer proc))))))
 
 (defun flymake-proselint-backend (report-fn &rest _args)
   "Flymake backend for Proselint.
@@ -334,9 +333,7 @@ node (flymake) Backend functions for more details."
                (if-let* ((conf (flymake-proselint-generate-configuration)))
                    (list flymake-proselint-executable "--config" conf "--json" "-")
                  (list flymake-proselint-executable "--json" "-"))
-               :sentinel #'flymake-proselint-sentinel)))
-    (process-put proc 'source (current-buffer))
-    (process-put proc 'report-fn report-fn)
+               :sentinel (flymake-proselint-make-sentinel (current-buffer) report-fn))))
     (setq flymake-proselint--flymake-proc proc)
     (save-restriction
       (widen)
