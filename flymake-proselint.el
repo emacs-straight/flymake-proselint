@@ -292,25 +292,26 @@ Flymake diagnostic objects."
     (pcase (process-status proc)
       ('exit
        (unwind-protect
-           (with-current-buffer (process-buffer proc)
-             (goto-char (point-min))
-             (cond
-              ((with-current-buffer source
-                 (not (eq proc flymake-proselint--flymake-proc)))
-               (flymake-log :warning "Canceling obsolete check %s" proc))
-              ((= (point-max) (point-min))
-               (flymake-log :debug "Empty response"))
-              ((condition-case err
-                   (let ((response (json-parse-buffer :object-type 'plist
-                                                      :array-type 'list)))
-                     (if (string= (plist-get response :status) "success")
-                         (thread-last
-                           (plist-get response :data)
-                           (flymake-proselint-sentinel-1 source)
-                           (funcall report-fn))
-                       (flymake-log :error "Check failed")))
-                 (json-parse-error
-                  (flymake-log :error "Invalid response: %S" err))))))
+           (when (buffer-live-p (current-buffer))
+             (with-current-buffer (process-buffer proc)
+               (goto-char (point-min))
+               (cond
+                ((with-current-buffer source
+                   (not (eq proc flymake-proselint--flymake-proc)))
+                 (flymake-log :warning "Canceling obsolete check %s" proc))
+                ((= (point-max) (point-min))
+                 (flymake-log :debug "Empty response"))
+                ((condition-case err
+                     (let ((response (json-parse-buffer :object-type 'plist
+                                                        :array-type 'list)))
+                       (if (string= (plist-get response :status) "success")
+                           (thread-last
+                             (plist-get response :data)
+                             (flymake-proselint-sentinel-1 source)
+                             (funcall report-fn))
+                         (flymake-log :error "Check failed")))
+                   (json-parse-error
+                    (flymake-log :error "Invalid response: %S" err)))))))
          (with-current-buffer source
            (setq flymake-proselint--flymake-proc nil))
          (kill-buffer (process-buffer proc))))
