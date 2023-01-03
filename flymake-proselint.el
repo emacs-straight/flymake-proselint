@@ -1,6 +1,6 @@
 ;;; flymake-proselint.el --- Flymake backend for proselint -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021-2022  Free Software Foundation, Inc.
+;; Copyright (C) 2021-2023  Free Software Foundation, Inc.
 ;;
 ;; Author: Manuel Uberti <manuel.uberti@inventati.org>
 ;; Maintainer: Manuel Uberti <~manuel-uberti/flymake-proselint@lists.sr.ht>
