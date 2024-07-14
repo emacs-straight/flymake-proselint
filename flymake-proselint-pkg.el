@@ -1,2 +1,0 @@
-;; Generated package description from flymake-proselint.el  -*- no-byte-compile: t -*-
-(define-package "flymake-proselint" "0.3.0.0.20230325.160756" "Flymake backend for proselint" '((emacs "27.1")) :commit "d93ee5b1f0c9a20fe04f263c0988769c439b3c13" :authors '(("Manuel Uberti" . "manuel.uberti@inventati.org")) :maintainer '("Manuel Uberti" . "~manuel-uberti/flymake-proselint@lists.sr.ht") :keywords '("convenience") :url "https://git.sr.ht/~manuel-uberti/flymake-proselint")
