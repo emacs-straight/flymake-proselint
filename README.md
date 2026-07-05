@@ -18,3 +18,7 @@ with something like:
                             (flymake-proselint-setup)))
 ```
 
+## Status
+
+I am not using this package anymore, so it can be considered unmaintained.
+Patches are welcome.
